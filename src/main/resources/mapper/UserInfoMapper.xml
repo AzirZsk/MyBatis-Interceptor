@@ -1,0 +1,16 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.azir.mybatisinterceptor.mapper.UserInfoMapper">
+
+    <select id="getUserInfo" resultType="com.azir.mybatisinterceptor.entity.UserInfo">
+            select * from user_info where id = #{id}
+    </select>
+
+    <insert id="addUserInfo" parameterType="com.azir.mybatisinterceptor.entity.UserInfo">
+            insert into user_info(id,name) values (#{id},#{name})
+    </insert>
+
+    <update id="updateUserInfo" parameterType="com.azir.mybatisinterceptor.entity.UserInfo">
+            update user_info set name = #{name} where id = #{id}
+    </update>
+
+</mapper>
