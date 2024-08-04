@@ -19,7 +19,19 @@ import java.sql.Connection;
 @Intercepts({
         @Signature(type = StatementHandler.class, method = "prepare", args = {Connection.class, Integer.class})
 })
-public class TenantInterceptor implements Interceptor {
+public class TenantMybatisInterceptor implements Interceptor {
+
+    private static final Field SQL_FIELD;
+
+    static {
+        try {
+            SQL_FIELD = BoundSql.class.getDeclaredField("sql");
+            SQL_FIELD.setAccessible(true);
+        } catch (NoSuchFieldException e) {
+            log.warn("无法获取BoundSql的sql字段");
+            throw new RuntimeException(e);
+        }
+    }
 
     @Override
     public Object intercept(Invocation invocation) throws Throwable {
@@ -29,17 +41,15 @@ public class TenantInterceptor implements Interceptor {
         log.info("原始SQL：{}", sql);
         // 修改SQL，添加租户信息。假设每个表都有一个tenant_id字段
         String modifiedSql = addTenantFilter(sql, TenantContext.getTenantId());
-
+        log.info("修改后的SQL：{}", modifiedSql);
         updateBoundSql(boundSql, modifiedSql);
         return invocation.proceed();
     }
 
-
     private void updateBoundSql(BoundSql boundSql, String sql) {
         try {
-            Field sqlField = BoundSql.class.getDeclaredField("sql");
-            sqlField.setAccessible(true);
-            sqlField.set(boundSql, sql);
+            // 使用静态变量反射修改sql，避免每次调用都重新获取对应字段
+            SQL_FIELD.set(boundSql, sql);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -47,10 +57,20 @@ public class TenantInterceptor implements Interceptor {
 
     private String addTenantFilter(String sql, Integer tenantId) {
         if (tenantId == null) {
-            throw new NullPointerException("租户id为空");
+            log.warn("租户ID为空，无法添加租户过滤条件");
+            return sql;
         }
-        return null;
+        // 更新操作，在正常的框架中，是会使用jsqlparser解析sql，然后在插入租户的查询条件的。
+        // 这里只是简单的示例
+        if (sql.contains("where")) {
+            int where = sql.lastIndexOf("where");
+            if (sql.contains("and")) {
+                return sql.substring(0, where) + "and tenant_id = '" + tenantId + "' and " + sql.substring(where);
+            }
+            return sql.substring(0, where) + " and tenant_id = '" + tenantId + "'";
+        } else {
+            return sql + " where tenant_id = '" + tenantId + "'";
+        }
     }
-
 
 }

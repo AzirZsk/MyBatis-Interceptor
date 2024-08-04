@@ -1,6 +1,10 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.azir.mybatisinterceptor.mapper.UserInfoMapper">
 
+    <select id="getAllUserInfo" resultType="com.azir.mybatisinterceptor.entity.UserInfo">
+        select * from user_info
+    </select>
+
     <select id="getUserInfo" resultType="com.azir.mybatisinterceptor.entity.UserInfo">
             select * from user_info where id = #{id}
     </select>
