@@ -65,9 +65,15 @@ public class TenantMybatisInterceptor implements Interceptor {
         if (sql.contains("where")) {
             int where = sql.lastIndexOf("where");
             if (sql.contains("and")) {
-                return sql.substring(0, where) + "and tenant_id = '" + tenantId + "' and " + sql.substring(where);
+                return sql.substring(0, where) + " and tenant_id = '" + tenantId + "' and " + sql.substring(where);
             }
             return sql.substring(0, where) + " and tenant_id = '" + tenantId + "'";
+        } else if (sql.contains("insert")) {
+            int i = sql.indexOf(")");
+            sql = sql.substring(0, i) + ",tenant_id" + sql.substring(i);
+            int i1 = sql.lastIndexOf(")");
+            sql = sql.substring(0, i1) + "," +  tenantId + sql.substring(i1);
+            return sql;
         } else {
             return sql + " where tenant_id = '" + tenantId + "'";
         }
